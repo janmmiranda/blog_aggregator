@@ -9,6 +9,11 @@ import (
 	"github.com/janmmiranda/blog_aggregator/internal/database"
 )
 
+type FeednFollowResponse struct {
+	Feed       FeedResponse       `json:"feed"`
+	FeedFollow FeedFollowResponse `json:"feed_follow"`
+}
+
 type FeedResponse struct {
 	ID        string    `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
@@ -27,7 +32,7 @@ func (cfg *apiConfig) createFeed(w http.ResponseWriter, req *http.Request, user 
 	reqFeed, err := decodeJson[params](req)
 	if err != nil {
 		log.Println(err.Error())
-		respondWithError(w, http.StatusInternalServerError, "Error decoding feed create request")
+		respondWithError(w, http.StatusBadRequest, "Error decoding feed create request")
 		return
 	}
 
@@ -50,25 +55,24 @@ func (cfg *apiConfig) createFeed(w http.ResponseWriter, req *http.Request, user 
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, FeedResponse{
-		ID:        feed.ID,
-		CreatedAt: feed.CreatedAt,
-		UpdatedAt: feed.UpdatedAt,
-		Name:      feed.Name,
-		Url:       feed.Url,
-		UserId:    feed.UserID,
-	})
-}
-
-func (cfg *apiConfig) readFeedsByUserId(w http.ResponseWriter, req *http.Request, user database.User) {
-	feeds, err := cfg.DB.ReadFeedsByUserId(req.Context(), user.ID)
+	feedFollowDb, err := cfg.createFeedFollow(req.Context(), user.ID, feed.ID)
 	if err != nil {
 		log.Println(err.Error())
-		respondWithError(w, http.StatusNotFound, "Couldn't find feeds for user")
+		respondWithError(w, http.StatusInternalServerError, "Error creating new feed follow")
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, convertFeedsForResponse(feeds))
+	respondWithJSON(w, http.StatusCreated, FeednFollowResponse{
+		Feed: FeedResponse{
+			ID:        feed.ID,
+			CreatedAt: feed.CreatedAt,
+			UpdatedAt: feed.UpdatedAt,
+			Name:      feed.Name,
+			Url:       feed.Url,
+			UserId:    feed.UserID,
+		},
+		FeedFollow: convertFeedFollowResponse(feedFollowDb),
+	})
 }
 
 func (cfg *apiConfig) readFeeds(w http.ResponseWriter, req *http.Request) {

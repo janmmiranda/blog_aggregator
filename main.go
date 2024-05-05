@@ -60,8 +60,11 @@ func run(ctx context.Context) error {
 	mux.HandleFunc("GET /v1/users", apiConfig.middlewareAuth(apiConfig.readUser))
 
 	mux.HandleFunc("POST /v1/feeds", apiConfig.middlewareAuth(apiConfig.createFeed))
-	mux.HandleFunc("GET /v1/feeds", apiConfig.middlewareAuth(apiConfig.readFeedsByUserId))
-	mux.HandleFunc("GET /v1/feeds/all", apiConfig.readFeeds)
+	mux.HandleFunc("GET /v1/feeds", apiConfig.readFeeds)
+
+	mux.HandleFunc("POST /v1/feed_follows", apiConfig.middlewareAuth(apiConfig.createFeedFollows))
+	mux.HandleFunc("DELETE /v1/feed_follows/{feedFollowID}", apiConfig.deleteFeedFollows)
+	mux.HandleFunc("GET /v1/feed_follows", apiConfig.middlewareAuth(apiConfig.readFeedFollows))
 
 	corsMux := middlewareLog(middlewareCors(mux))
 
