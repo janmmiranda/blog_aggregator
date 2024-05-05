@@ -9,7 +9,7 @@ import (
 const NoAuthHeaderIncluded = "no Auth header included in request"
 const Apikey = "ApiKey"
 
-func GetBearerToken(headers http.Header, tokenName string) (string, error) {
+func GetToken(headers http.Header, tokenName string) (string, error) {
 	authHeader := headers.Get("Authorization")
 	if authHeader == "" {
 		return "", errors.New(NoAuthHeaderIncluded)

@@ -55,8 +55,13 @@ func run(ctx context.Context) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /v1/readiness", handlerReadiness)
 	mux.HandleFunc("GET /v1/error", handlerError)
+
 	mux.HandleFunc("POST /v1/users", apiConfig.createUser)
-	mux.HandleFunc("GET /v1/users", apiConfig.readUser)
+	mux.HandleFunc("GET /v1/users", apiConfig.middlewareAuth(apiConfig.readUser))
+
+	mux.HandleFunc("POST /v1/feeds", apiConfig.middlewareAuth(apiConfig.createFeed))
+	mux.HandleFunc("GET /v1/feeds", apiConfig.middlewareAuth(apiConfig.readFeedsByUserId))
+	mux.HandleFunc("GET /v1/feeds/all", apiConfig.readFeeds)
 
 	corsMux := middlewareLog(middlewareCors(mux))
 

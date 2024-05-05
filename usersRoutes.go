@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -50,7 +49,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, req *http.Request) {
 
 	user, err := cfg.DB.CreateUser(req.Context(), userReq)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		respondWithError(w, http.StatusInternalServerError, "Error creating new user")
 		return
 	}
@@ -64,21 +63,7 @@ func (cfg *apiConfig) createUser(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-func (cfg *apiConfig) readUser(w http.ResponseWriter, req *http.Request) {
-	apikey, err := GetBearerToken(req.Header, Apikey)
-	if err != nil {
-		log.Println(err.Error())
-		respondWithError(w, http.StatusInternalServerError, "Unable to authorize request")
-		return
-	}
-
-	user, err := cfg.DB.ReadUserByAPIKey(req.Context(), apikey)
-	if err != nil {
-		log.Println(err.Error())
-		respondWithError(w, http.StatusInternalServerError, "Error reading user by apikey")
-		return
-	}
-
+func (cfg *apiConfig) readUser(w http.ResponseWriter, req *http.Request, user database.User) {
 	respondWithJSON(w, http.StatusOK, UserResponse{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,

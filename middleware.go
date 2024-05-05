@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/janmmiranda/blog_aggregator/internal/database"
 )
 
 func middlewareCors(next http.Handler) http.Handler {
@@ -23,4 +25,26 @@ func middlewareLog(next http.Handler) http.Handler {
 		log.Printf("%s %s", r.Method, r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
+}
+
+type authedHandler func(http.ResponseWriter, *http.Request, database.User)
+
+func (cfg *apiConfig) middlewareAuth(handler authedHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		apikey, err := GetToken(req.Header, "ApiKey")
+		if err != nil {
+			log.Println(err.Error())
+			respondWithError(w, http.StatusUnauthorized, "Couldn't find api key")
+			return
+		}
+		user, err := cfg.DB.ReadUserByAPIKey(req.Context(), apikey)
+		if err != nil {
+			log.Println(err.Error())
+			respondWithError(w, http.StatusNotFound, "Couldn't get user")
+			return
+		}
+
+		handler(w, req, user)
+	}
+
 }
