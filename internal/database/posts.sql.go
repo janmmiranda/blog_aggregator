@@ -22,7 +22,7 @@ type CreatePostParams struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Title       sql.NullString
-	Url         sql.NullString
+	Url         string
 	Description sql.NullString
 	PublishedAt sql.NullTime
 	FeedID      string
@@ -60,15 +60,17 @@ ON p.feed_id = ff.feed_id
 WHERE ff.user_id = $1
 ORDER BY published_at DESC NULLS LAST
 LIMIT $2
+OFFSET $3
 `
 
 type GetPostsByUserParams struct {
 	UserID string
 	Limit  int32
+	Offset int32
 }
 
 func (q *Queries) GetPostsByUser(ctx context.Context, arg GetPostsByUserParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsByUser, arg.UserID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getPostsByUser, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

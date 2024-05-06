@@ -9,4 +9,5 @@ JOIN feedFollows ff
 ON p.feed_id = ff.feed_id
 WHERE ff.user_id = $1
 ORDER BY published_at DESC NULLS LAST
-LIMIT $2;
+LIMIT $2
+OFFSET $3;

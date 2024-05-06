@@ -78,6 +78,18 @@ func scrapeFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 	for _, item := range feedData.Channel.Item {
 		log.Println("Found post", item.Title)
 		currTime = time.Now()
+		publishedTime := sql.NullTime{}
+
+		timeLayouts := []string{time.RFC1123Z, time.RFC1123}
+		for _, timeLtimeLayout := range timeLayouts {
+			if t, err := time.Parse(timeLtimeLayout, item.PubDate); err == nil {
+				publishedTime = sql.NullTime{
+					Time:  t,
+					Valid: true,
+				}
+			}
+		}
+
 		_, err := db.CreatePost(context.Background(), database.CreatePostParams{
 			ID:        uuid.NewString(),
 			CreatedAt: currTime,
@@ -86,19 +98,13 @@ func scrapeFeed(db *database.Queries, wg *sync.WaitGroup, feed database.Feed) {
 				String: item.Title,
 				Valid:  true,
 			},
-			Url: sql.NullString{
-				String: item.Link,
-				Valid:  true,
-			},
+			Url: item.Link,
 			Description: sql.NullString{
 				String: item.Description,
 				Valid:  true,
 			},
-			PublishedAt: sql.NullTime{
-				Time:  currTime,
-				Valid: true,
-			},
-			FeedID: feed.ID,
+			PublishedAt: publishedTime,
+			FeedID:      feed.ID,
 		})
 		if err != nil {
 			log.Printf("Couldn't persist post %s", item.Title)

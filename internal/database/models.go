@@ -32,7 +32,7 @@ type Post struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	Title       sql.NullString
-	Url         sql.NullString
+	Url         string
 	Description sql.NullString
 	PublishedAt sql.NullTime
 	FeedID      string
