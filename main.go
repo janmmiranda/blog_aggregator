@@ -66,6 +66,8 @@ func run(ctx context.Context) error {
 	mux.HandleFunc("DELETE /v1/feed_follows/{feedFollowID}", apiConfig.deleteFeedFollows)
 	mux.HandleFunc("GET /v1/feed_follows", apiConfig.middlewareAuth(apiConfig.readFeedFollows))
 
+	mux.HandleFunc("GET /v1/posts", apiConfig.middlewareAuth(apiConfig.readPostsByUser))
+
 	corsMux := middlewareLog(middlewareCors(mux))
 
 	server := &http.Server{
@@ -87,6 +89,10 @@ func run(ctx context.Context) error {
 			log.Fatalf("Error shutting down server: %v", err)
 		}
 	}()
+
+	const collectionConcurrency = 10
+	const collectionInterval = 10 * time.Minute
+	go startScraping(dbQueries, collectionConcurrency, collectionInterval)
 
 	log.Printf("Starting server on port %s...\n", port)
 	return server.ListenAndServe()
